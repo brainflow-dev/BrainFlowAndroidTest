@@ -35,27 +35,6 @@
             app:defaultValue="EEG"
             app:useSimpleSummaryProvider="true"/>
 
-        <SwitchPreferenceCompat
-            app:key="@string/plot_timeseries_key"
-            app:defaultValue="true"
-            app:title="@string/plot_timeseries_title"
-            app:summaryOn="@string/plot_timeseries_on"
-            app:summaryOff="@string/plot_timeseries_off"/>
-
-        <SwitchPreferenceCompat
-            app:key="@string/plot_psd_key"
-            app:defaultValue="true"
-            app:title="@string/plot_psd_title"
-            app:summaryOn="@string/plot_psd_on"
-            app:summaryOff="@string/plot_psd_off"/>
-
-        <SwitchPreferenceCompat
-            app:key="@string/plot_bandpower_key"
-            app:defaultValue="false"
-            app:title="@string/plot_bandpower_title"
-            app:summaryOn="@string/plot_bandpower_on"
-            app:summaryOff="@string/plot_bandpower_off"/>
-
     </PreferenceCategory>
 
 </PreferenceScreen>

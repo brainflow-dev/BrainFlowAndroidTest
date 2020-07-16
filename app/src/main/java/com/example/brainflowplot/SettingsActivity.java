@@ -62,18 +62,7 @@ public class SettingsActivity extends AppCompatActivity {
             // do nothing
         }
         String dataType = prefs.getString(getString(R.string.data_type_key), "");
-        boolean use_timeseries = prefs.getBoolean(getString(R.string.plot_timeseries_key), true);
-        boolean use_psd = prefs.getBoolean(getString(R.string.plot_psd_key), true);
-        boolean use_bandpower = prefs.getBoolean(getString(R.string.plot_bandpower_key), true);
 
-        if ((!use_bandpower) && (!use_psd) && (!use_timeseries)) {
-            text = "No widgets selected";
-            duration = Toast.LENGTH_LONG;
-            toast = Toast.makeText(context, text, duration);
-            toast.show();
-            isTryingToConnect = false;
-            return;
-        }
         try {
             BrainFlowInputParams params = new BrainFlowInputParams();
             params.ip_address = ipAddr;

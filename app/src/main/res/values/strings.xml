@@ -27,26 +27,9 @@
     <string name="data_type_title">Signal Type</string>
     <string name="data_type_key">data_type_key</string>
 
-    <string name="plot_timeseries_title">Plot Signal</string>
-    <string name="plot_timeseries_key">time_series_key</string>
-    <string name="plot_timeseries_on">Plot EXG data in realtime</string>
-    <string name="plot_timeseries_off">Don\'t plot EXG data</string>
-
-    <string name="plot_psd_title">Plot PSD</string>
-    <string name="plot_psd_key">plot_psd_key</string>
-    <string name="plot_psd_on">Plot PSD in realtime</string>
-    <string name="plot_psd_off">Don\'t plot PSD</string>
-
-    <string name="plot_bandpower_title">Plot BandPowers</string>
-    <string name="plot_bandpower_key">plot_bandpower_key</string>
-    <string name="plot_bandpower_on">Plot BandPowers in realtime</string>
-    <string name="plot_bandpower_off">Don\'t plot BandPowers</string>
-
     <string name="submit_button">SUBMIT</string>
     <string name="submit_summary">Configure parameters above and submit settings to start</string>
     <string name="submit_key">submit_key</string>
     <string name="title_activity_data">DataActivity</string>
-    <string name="tab_text_1">Tab 1</string>
-    <string name="tab_text_2">Tab 2</string>
 
 </resources>
