@@ -1,6 +1,7 @@
 package com.example.brainflowplot;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,6 +41,9 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void prepareSession(View view) {
+        Intent myIntent = new Intent(this, DataActivity.class);
+        startActivity(myIntent);
+        /*
         // don't run it twice
         if (isTryingToConnect) {
             return;
@@ -79,6 +83,8 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         isTryingToConnect = false;
+
+         */
     }
 
     @Override

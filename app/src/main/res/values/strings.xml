@@ -42,4 +42,7 @@
     <string name="bs_summary">Configure BandStop Filter</string>
     <string name="bs_key">bs_key</string>
     <string name="resolution_preference_separator">-</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
 </resources>
