@@ -1,4 +1,4 @@
-package com.example.brainflowplot.ui.notifications;
+package com.example.brainflowplot.ui.psdplot;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,17 +14,17 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.brainflowplot.R;
 
-public class NotificationsFragment extends Fragment {
+public class PSDPlotFragment extends Fragment {
 
-    private NotificationsViewModel notificationsViewModel;
+    private PSDPlotViewModel PSDPlotViewModel;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        notificationsViewModel =
-                ViewModelProviders.of(this).get(NotificationsViewModel.class);
-        View root = inflater.inflate(R.layout.fragment_notifications, container, false);
-        final TextView textView = root.findViewById(R.id.text_notifications);
-        notificationsViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
+        PSDPlotViewModel =
+                ViewModelProviders.of(this).get(PSDPlotViewModel.class);
+        View root = inflater.inflate(R.layout.fragment_psdplot, container, false);
+        final TextView textView = root.findViewById(R.id.text_dashboard);
+        PSDPlotViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 textView.setText(s);

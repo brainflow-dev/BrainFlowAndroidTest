@@ -1,4 +1,4 @@
-package com.example.brainflowplot.ui.dashboard;
+package com.example.brainflowplot.ui.bandpowerplot;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,17 +14,17 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.brainflowplot.R;
 
-public class DashboardFragment extends Fragment {
+public class BandPowerPlotFragment extends Fragment {
 
-    private DashboardViewModel dashboardViewModel;
+    private BandPowerPlotViewModel bandPowerPlotViewModel;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        dashboardViewModel =
-                ViewModelProviders.of(this).get(DashboardViewModel.class);
-        View root = inflater.inflate(R.layout.fragment_dashboard, container, false);
-        final TextView textView = root.findViewById(R.id.text_dashboard);
-        dashboardViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
+        bandPowerPlotViewModel =
+                ViewModelProviders.of(this).get(BandPowerPlotViewModel.class);
+        View root = inflater.inflate(R.layout.fragment_bandpowerplot, container, false);
+        final TextView textView = root.findViewById(R.id.text_notifications);
+        bandPowerPlotViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 textView.setText(s);

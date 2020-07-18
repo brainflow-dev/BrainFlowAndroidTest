@@ -1,14 +1,14 @@
-package com.example.brainflowplot.ui.notifications;
+package com.example.brainflowplot.ui.bandpowerplot;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-public class NotificationsViewModel extends ViewModel {
+public class BandPowerPlotViewModel extends ViewModel {
 
     private MutableLiveData<String> mText;
 
-    public NotificationsViewModel() {
+    public BandPowerPlotViewModel() {
         mText = new MutableLiveData<>();
         mText.setValue("This is notifications fragment");
     }

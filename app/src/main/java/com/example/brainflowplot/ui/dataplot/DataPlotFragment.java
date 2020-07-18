@@ -1,4 +1,4 @@
-package com.example.brainflowplot.ui.home;
+package com.example.brainflowplot.ui.dataplot;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -14,17 +14,17 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.brainflowplot.R;
 
-public class HomeFragment extends Fragment {
+public class DataPlotFragment extends Fragment {
 
-    private HomeViewModel homeViewModel;
+    private DataPlotViewModel dataPlotViewModel;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        homeViewModel =
-                ViewModelProviders.of(this).get(HomeViewModel.class);
-        View root = inflater.inflate(R.layout.fragment_home, container, false);
+        dataPlotViewModel =
+                ViewModelProviders.of(this).get(DataPlotViewModel.class);
+        View root = inflater.inflate(R.layout.fragment_dataplot, container, false);
         final TextView textView = root.findViewById(R.id.text_home);
-        homeViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
+        dataPlotViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
             @Override
             public void onChanged(@Nullable String s) {
                 textView.setText(s);
