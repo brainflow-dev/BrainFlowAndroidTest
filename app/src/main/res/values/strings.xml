@@ -15,9 +15,9 @@
     <string name="ip_address_title">IP Address</string>
     <string name="ip_address_key">ip_addr_key</string>
     <string name="ip_port_title">IP Port</string>
-    <string name="ip_address_summary">Required for some boards</string>
+    <string name="ip_address_summary">Optional: can be discovered automatically</string>
     <string name="ip_port_key">ip_port_key</string>
-    <string name="ip_port_summary">Required for some boards</string>
+    <string name="ip_port_summary">Required for WIFI Shield</string>
 
     <!-- Settings Activity Title -->
     <string name="title_activity_settings">Settings</string>
