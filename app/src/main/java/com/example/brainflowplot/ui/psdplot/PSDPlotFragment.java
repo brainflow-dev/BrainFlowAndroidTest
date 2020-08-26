@@ -49,8 +49,8 @@ public class PSDPlotFragment extends Fragment {
         graph.getGridLabelRenderer().setGridStyle(GridLabelRenderer.GridStyle.BOTH);
         graph.getViewport().setMinX(1);
         graph.getViewport().setMaxX(100);
-        graph.getViewport().setMinY(0);
-        graph.getViewport().setMaxY(10);
+        graph.getViewport().setMinY(-7);
+        graph.getViewport().setMaxY(7);
         graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getGridLabelRenderer().setNumHorizontalLabels(20);

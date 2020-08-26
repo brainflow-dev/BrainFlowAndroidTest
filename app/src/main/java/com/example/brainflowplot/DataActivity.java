@@ -40,8 +40,8 @@ public class DataActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         // read settings
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         int boardId = Integer.valueOf(prefs.getString(getString(R.string.board_id_key), "-1"));
@@ -76,7 +76,7 @@ public class DataActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
+    protected void onPause() {
         try {
             if (boardShim != null) {
                 boardShim.release_session();
@@ -84,6 +84,6 @@ public class DataActivity extends AppCompatActivity {
         } catch (BrainFlowError e) {
             Log.e(getString(R.string.log_tag), e.getMessage());
         }
-        super.onStop();
+        super.onPause();
     }
 }
