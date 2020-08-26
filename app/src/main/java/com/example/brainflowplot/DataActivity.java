@@ -27,7 +27,6 @@ public class DataActivity extends AppCompatActivity {
     public static BoardShim boardShim = null;
     public static int samplingRate = 0;
     public static int[] channels = null;
-
     public static final int[] colors = {Color.BLUE, Color.YELLOW, Color.RED, Color.MAGENTA, Color.GREEN, Color.CYAN, Color.GRAY, Color.BLACK};
 
     @Override
@@ -53,7 +52,6 @@ public class DataActivity extends AppCompatActivity {
         } catch (Exception e) {
             // do nothing
         }
-        String dataType = prefs.getString(getString(R.string.data_type_key), "");
 
         try {
             BrainFlowInputParams params = new BrainFlowInputParams();
@@ -64,15 +62,7 @@ public class DataActivity extends AppCompatActivity {
             boardShim.prepare_session();
             boardShim.start_stream();
             samplingRate = BoardShim.get_sampling_rate(boardId);
-            if (dataType.equals("EEG")) {
-                channels = BoardShim.get_eeg_channels(boardId);
-            } else {
-                if (dataType.equals("EMG")) {
-                    channels = BoardShim.get_emg_channels(boardId);
-                } else {
-                    channels = BoardShim.get_ecg_channels(boardId);
-                }
-            }
+            channels = BoardShim.get_exg_channels(boardId);
             SettingsActivity.isPrevFailed = false;
         } catch (Exception e) {
             Log.e(getString(R.string.log_tag), e.getMessage());

@@ -1,6 +1,5 @@
 package com.example.brainflowplot.ui.dataplot;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -10,7 +9,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.preference.PreferenceManager;
 
 import com.example.brainflowplot.DataActivity;
 import com.example.brainflowplot.R;
@@ -26,19 +24,14 @@ import brainflow.FilterTypes;
 
 public class DataPlotFragment extends Fragment {
 
-    public int windowSize = 8;
-    public int downnsamplingOrder = 1;
-    public int timeSleep = 100; // 10fps, good enough for phone
+    private int windowSize = 8;
+    private int timeSleep = 50; // 20fps
     private GraphView graph = null;
     private LineGraphSeries<DataPoint>[] series= null;
-
     private Runnable worker = null;
     private final Handler handler = new Handler();
+    private static int downnsamplingOrder = 1;
     private static final int maxValue = 1000;
-    private double bandPassCenter = 0;
-    private double bandPassWidth = 0;
-    private double bandStopWidth = 0;
-    private double bandStopCenter = 0;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -51,19 +44,6 @@ public class DataPlotFragment extends Fragment {
         graph.getGridLabelRenderer().setHorizontalLabelsVisible(false);
         graph.getGridLabelRenderer().setGridStyle(GridLabelRenderer.GridStyle.NONE);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(rootView.getContext());
-        String bp = prefs.getString(getString(R.string.bp_key), "1-50");
-        String bs = prefs.getString(getString(R.string.bs_key), "58-62");
-        int bpStart = Integer.valueOf(bp.split("-")[0]);
-        int bpEnd = Integer.valueOf(bp.split("-")[1]);
-        int bsStart = Integer.valueOf(bs.split("-")[0]);
-        int bsEnd = Integer.valueOf(bs.split("-")[1]);
-
-        bandStopWidth = Math.abs(bsEnd - bsStart);
-        bandStopCenter = (bsStart + bsEnd) / 2.0;
-        bandPassWidth = Math.abs(bpEnd - bpStart);
-        bandPassCenter = (bpStart + bpEnd) / 2.0;
-
         return rootView;
     }
 
@@ -75,8 +55,6 @@ public class DataPlotFragment extends Fragment {
         int desiredSamplingRate = 500;
         if (DataActivity.samplingRate > desiredSamplingRate) {
             downnsamplingOrder = DataActivity.samplingRate / desiredSamplingRate;
-        } else {
-            downnsamplingOrder = 1;
         }
 
         graph.getViewport().setXAxisBoundsManual(true);
@@ -97,8 +75,8 @@ public class DataPlotFragment extends Fragment {
                     double[][] tempArray = DataActivity.boardShim.get_current_board_data(DataActivity.samplingRate * windowSize);
                     double[][] tmpArray = new double[tempArray.length][DataActivity.samplingRate * windowSize];
                     double[][] dataArray = null;
+                    // prepend with zeroes if less datapoints
                     if (tempArray[0].length != DataActivity.samplingRate * windowSize) {
-                        // prepend with zeroes if less datapoints
                         for (int i = 0; i < tempArray.length; i++) {
                             for (int j = 0; j < DataActivity.samplingRate * windowSize - tempArray[i].length; j++) {
                                 tmpArray[i][j] = 0.0;
@@ -112,9 +90,11 @@ public class DataPlotFragment extends Fragment {
                         tmpArray = tempArray;
                     }
                     for (int i = 0; i < DataActivity.channels.length; i++) {
-                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, bandStopCenter, bandStopWidth, 2,
+                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 50.0, 4.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
-                        DataFilter.perform_bandpass(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, bandPassCenter, bandPassWidth, 2,
+                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 60.0, 4.0, 2,
+                                FilterTypes.BUTTERWORTH.get_code (), 0.0);
+                        DataFilter.perform_bandpass(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 24.0, 47.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
                     }
                     // downsampling

@@ -25,38 +25,4 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory app:title="@string/app_params">
-
-        <ListPreference
-            app:entries="@array/data_type_entries"
-            app:entryValues="@array/data_type_values"
-            app:key="@string/data_type_key"
-            app:title="@string/data_type_title"
-            app:defaultValue="EEG"
-            app:useSimpleSummaryProvider="true"/>
-
-        <de.mrapp.android.preference.ResolutionPreference
-            app:defaultValue="1-50"
-            app:unit="@string/units"
-            app:dialogMessage="@string/bp_message"
-            app:dialogTitle="@string/bp_title"
-            app:key="@string/bp_key"
-            app:summary="@string/bp_summary"
-            app:title="@string/bp_title"
-            app:showValueAsSummary="true"
-            app:dialogThemeResource="@style/Theme.MaterialComponents.Light.NoActionBar"/>
-
-        <de.mrapp.android.preference.ResolutionPreference
-            app:defaultValue="58-62"
-            app:unit="@string/units"
-            app:dialogMessage="@string/bs_message"
-            app:dialogTitle="@string/bs_title"
-            app:key="@string/bs_key"
-            app:summary="@string/bs_summary"
-            app:title="@string/bs_title"
-            app:showValueAsSummary="true"
-            app:dialogThemeResource="@style/Theme.MaterialComponents.Light.NoActionBar"/>
-
-    </PreferenceCategory>
-
 </PreferenceScreen>

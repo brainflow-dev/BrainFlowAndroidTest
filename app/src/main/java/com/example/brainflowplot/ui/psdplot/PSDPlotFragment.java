@@ -1,6 +1,5 @@
 package com.example.brainflowplot.ui.psdplot;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -10,7 +9,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.preference.PreferenceManager;
 
 import com.example.brainflowplot.DataActivity;
 import com.example.brainflowplot.R;
@@ -29,17 +27,13 @@ import brainflow.WindowFunctions;
 
 public class PSDPlotFragment extends Fragment {
 
-    public int windowSize = 2;
-    public int timeSleep = 100;
+    public int windowSize = 8;
+    public int timeSleep = 50;
     private GraphView graph = null;
     private LineGraphSeries<DataPoint>[] series= null;
 
     private Runnable worker = null;
     private final Handler handler = new Handler();
-    private double bandPassCenter = 0;
-    private double bandPassWidth = 0;
-    private double bandStopWidth = 0;
-    private double bandStopCenter = 0;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -59,20 +53,7 @@ public class PSDPlotFragment extends Fragment {
         graph.getViewport().setMaxY(10);
         graph.getViewport().setYAxisBoundsManual(true);
         graph.getViewport().setXAxisBoundsManual(true);
-        graph.getGridLabelRenderer().setNumHorizontalLabels(10);
-
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(rootView.getContext());
-        String bp = prefs.getString(getString(R.string.bp_key), "1-50");
-        String bs = prefs.getString(getString(R.string.bs_key), "58-62");
-        int bpStart = Integer.valueOf(bp.split("-")[0]);
-        int bpEnd = Integer.valueOf(bp.split("-")[1]);
-        int bsStart = Integer.valueOf(bs.split("-")[0]);
-        int bsEnd = Integer.valueOf(bs.split("-")[1]);
-
-        bandStopWidth = Math.abs(bsEnd - bsStart);
-        bandStopCenter = (bsStart + bsEnd) / 2.0;
-        bandPassWidth = Math.abs(bpEnd - bpStart);
-        bandPassCenter = (bpStart + bpEnd) / 2.0;
+        graph.getGridLabelRenderer().setNumHorizontalLabels(20);
 
         return rootView;
     }
@@ -95,26 +76,25 @@ public class PSDPlotFragment extends Fragment {
                 try {
                     int numDataPoints = DataFilter.get_nearest_power_of_two(DataActivity.samplingRate * windowSize);
                     double[][] tmpArray = DataActivity.boardShim.get_current_board_data(numDataPoints);
-                    if (tmpArray[0].length != numDataPoints) {
-                        // dont prepend, just wait for more data
-                        return;
-                    }
                     for (int i = 0; i < DataActivity.channels.length; i++) {
-                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, bandStopCenter, bandStopWidth, 2,
+                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 50.0, 4.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
-                        DataFilter.perform_bandpass(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, bandPassCenter, bandPassWidth, 2,
+                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 60.0, 4.0, 2,
+                                FilterTypes.BUTTERWORTH.get_code (), 0.0);
+                        DataFilter.perform_bandpass(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 24.0, 47.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
                     }
                     // prepare data to plot
                     for (int i = 0; i < DataActivity.channels.length; i++) {
                         double[] channel = tmpArray[DataActivity.channels[i]];
-                        Pair<double[], double[]> psd = DataFilter.get_log_psd (channel, 0, channel.length, DataActivity.samplingRate, WindowFunctions.HAMMING.get_code ());
+                        int nfft = DataFilter.get_nearest_power_of_two(DataActivity.samplingRate) * 2;
+                        Pair<double[], double[]> psd = DataFilter.get_psd_welch (channel, nfft, nfft / 2, DataActivity.samplingRate, WindowFunctions.HANNING.get_code());
                         int count = psd.getKey().length;
                         DataPoint[] values = new DataPoint[count];
                         for (int j = 0; j < count; j++) {
                             double x = psd.getValue()[j];
                             double y = psd.getKey()[j];
-                            DataPoint v = new DataPoint(x, y);
+                            DataPoint v = new DataPoint(x, Math.log10(y));
                             values[j] = v;
                         }
                         series[i].resetData(values);

@@ -19,36 +19,27 @@ import com.jjoe64.graphview.ValueDependentColor;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import brainflow.BrainFlowError;
 import brainflow.DataFilter;
-import brainflow.WindowFunctions;
 
 
 public class BandPowerPlotFragment extends Fragment {
 
-    public int windowSize = 2;
-    public int timeSleep = 100;
+    private int windowSize = 4;
+    private int timeSleep = 50;
     private GraphView graph = null;
     private BarGraphSeries<DataPoint> series= null;
-
     private Runnable worker = null;
     private final Handler handler = new Handler();
-
-    private List<Pair<Integer, Integer>> bands = new ArrayList<Pair<Integer, Integer>>();
-    private final String[] names = {"Delta", "Theta", "Alpha", "Beta", "Gamma"};
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_bandpowerplot, container, false);
 
         graph = (GraphView) rootView.findViewById(R.id.bandpowergraph);
-        graph.setTitle("BandPower");
+        graph.setTitle("BandPowers");
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(5);
@@ -65,15 +56,8 @@ public class BandPowerPlotFragment extends Fragment {
                 return Color.rgb((int) data.getX() * 255 / 6, (int) Math.abs(data.getY() * 255 / 4), 100);
             }
         });
-        series.setTitle("Delta Theta Alpha Beta Gamma");
 
         graph.addSeries(series);
-
-        bands.add(new ImmutablePair<Integer, Integer>(1, 4));
-        bands.add(new ImmutablePair<Integer, Integer>(4, 8));
-        bands.add(new ImmutablePair<Integer, Integer>(8, 13));
-        bands.add(new ImmutablePair<Integer, Integer>(13, 30));
-        bands.add(new ImmutablePair<Integer, Integer>(30, 70));
 
         return rootView;
     }
@@ -88,32 +72,10 @@ public class BandPowerPlotFragment extends Fragment {
                 try {
                     int numDataPoints = DataFilter.get_nearest_power_of_two(DataActivity.samplingRate * windowSize);
                     double[][] tmpArray = DataActivity.boardShim.get_current_board_data(numDataPoints);
-                    if (tmpArray[0].length != numDataPoints) {
-                        // dont prepend, just wait for more data
-                        return;
-                    }
-                    // average across all channels
-                    DataPoint[] values = new DataPoint[bands.size()];
+                    Pair<double[], double[]> bands = DataFilter.get_avg_band_powers (tmpArray, DataActivity.channels, DataActivity.samplingRate, true);
+                    DataPoint[] values = new DataPoint[bands.getKey().length];
                     for (int i = 0; i < values.length; i++) {
-                        values[i] = new DataPoint(i, 0);
-                    }
-                    for (int i = 0; i < DataActivity.channels.length; i++) {
-                        double[] channel = tmpArray[DataActivity.channels[i]];
-                        Pair<double[], double[]> psd = DataFilter.get_psd (channel, 0, channel.length, DataActivity.samplingRate, WindowFunctions.HAMMING.get_code ());
-                        for (int j = 0; j < bands.size(); j++) {
-                            double bandPower = DataFilter.get_band_power(psd, bands.get(j).getLeft(), bands.get(j).getRight());
-                            values[j] = new DataPoint(values[j].getX(), values[j].getY() + bandPower);
-                        }
-                    }
-                    // normalize for colors
-                    double max = 0;
-                    for (int j = 0; j < bands.size(); j++) {
-                        if (values[j].getY() > max) {
-                            max = values[j].getY();
-                        }
-                    }
-                    for (int j = 0; j < bands.size(); j++) {
-                        values[j] = new DataPoint(values[j].getX(), values[j].getY() / max);
+                        values[i] = new DataPoint(i, bands.getKey()[i]);
                     }
                     series.resetData(values);
                 } catch (BrainFlowError e) {

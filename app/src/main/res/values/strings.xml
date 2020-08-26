@@ -31,17 +31,7 @@
     <string name="submit_summary">Configure parameters above and submit settings to start</string>
     <string name="submit_key">submit_key</string>
     <string name="title_activity_data">DataActivity</string>
-
-    <string name="units">Hz</string>
-    <string name="bp_message">Configure BandPass Filter</string>
-    <string name="bp_title">BandPass</string>
-    <string name="bp_summary">Configure BandPass Filter</string>
-    <string name="bp_key">bp_key</string>
-    <string name="bs_message">Configure BandStop Filter</string>
-    <string name="bs_title">BandStop</string>
-    <string name="bs_summary">Configure BandStop Filter</string>
-    <string name="bs_key">bs_key</string>
-    <string name="resolution_preference_separator">-</string>
+    
     <string name="title_dataplot">Data</string>
     <string name="title_psdplot">PSD</string>
     <string name="title_bandpowerplot">BandPower</string>
