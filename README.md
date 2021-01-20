@@ -4,7 +4,7 @@
 
 **Disclaimer: this code can be used as a reference or starting point for your own projects, but it's a test application and doesn't pretend to be production quality**
 
-### [BrainFlow Android Dev and User Guides](https://brainflow.ai/get_started/?platform=android&language=java&manufactorer=openbci&board=wifi-shield&)
+### [BrainFlow Android Dev and User Guides](https://brainflow.readthedocs.io/en/stable/BuildBrainFlow.html#android)
 
 Currently it supports:
 
