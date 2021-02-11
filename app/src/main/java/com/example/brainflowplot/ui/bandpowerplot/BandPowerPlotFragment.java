@@ -79,7 +79,7 @@ public class BandPowerPlotFragment extends Fragment {
                     }
                     series.resetData(values);
                 } catch (BrainFlowError e) {
-                    Log.e(getString(R.string.log_tag), e.getMessage());
+                    Log.e(getString(R.string.log_tag), Log.getStackTraceString(e));
                 }
 
                 handler.postDelayed(this, timeSleep);

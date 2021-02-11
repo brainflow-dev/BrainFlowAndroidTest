@@ -100,7 +100,7 @@ public class PSDPlotFragment extends Fragment {
                         series[i].resetData(values);
                     }
                 } catch (BrainFlowError e) {
-                    Log.e(getString(R.string.log_tag), e.getMessage());
+                    Log.e(getString(R.string.log_tag), Log.getStackTraceString(e));
                 }
 
                 handler.postDelayed(this, timeSleep);
