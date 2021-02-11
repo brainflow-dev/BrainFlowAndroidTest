@@ -65,7 +65,7 @@ public class DataActivity extends AppCompatActivity {
             channels = BoardShim.get_exg_channels(boardId);
             SettingsActivity.isPrevFailed = false;
         } catch (Exception e) {
-            Log.e(getString(R.string.log_tag), e.getMessage());
+            Log.e(getString(R.string.log_tag), Log.getStackTraceString(e));
             SettingsActivity.isPrevFailed = true;
         }
         if (SettingsActivity.isPrevFailed) {
@@ -82,7 +82,7 @@ public class DataActivity extends AppCompatActivity {
                 boardShim.release_session();
             }
         } catch (BrainFlowError e) {
-            Log.e(getString(R.string.log_tag), e.getMessage());
+            Log.e(getString(R.string.log_tag), Log.getStackTraceString(e));
         }
         super.onPause();
     }
