@@ -22,7 +22,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import brainflow.BrainFlowError;
 import brainflow.DataFilter;
 import brainflow.FilterTypes;
-import brainflow.WindowFunctions;
+import brainflow.WindowOperations;
 
 
 public class PSDPlotFragment extends Fragment {
@@ -77,18 +77,18 @@ public class PSDPlotFragment extends Fragment {
                     int numDataPoints = DataFilter.get_nearest_power_of_two(DataActivity.samplingRate * windowSize);
                     double[][] tmpArray = DataActivity.boardShim.get_current_board_data(numDataPoints);
                     for (int i = 0; i < DataActivity.channels.length; i++) {
-                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 50.0, 4.0, 2,
+                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 48.0, 52.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
-                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 60.0, 4.0, 2,
+                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 58.0, 62.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
-                        DataFilter.perform_bandpass(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 24.0, 47.0, 2,
+                        DataFilter.perform_bandpass(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 2.0, 47.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
                     }
                     // prepare data to plot
                     for (int i = 0; i < DataActivity.channels.length; i++) {
                         double[] channel = tmpArray[DataActivity.channels[i]];
                         int nfft = DataFilter.get_nearest_power_of_two(DataActivity.samplingRate) * 2;
-                        Pair<double[], double[]> psd = DataFilter.get_psd_welch (channel, nfft, nfft / 2, DataActivity.samplingRate, WindowFunctions.HANNING.get_code());
+                        Pair<double[], double[]> psd = DataFilter.get_psd_welch (channel, nfft, nfft / 2, DataActivity.samplingRate, WindowOperations.HANNING.get_code());
                         int count = psd.getKey().length;
                         DataPoint[] values = new DataPoint[count];
                         for (int j = 0; j < count; j++) {

@@ -90,11 +90,11 @@ public class DataPlotFragment extends Fragment {
                         tmpArray = tempArray;
                     }
                     for (int i = 0; i < DataActivity.channels.length; i++) {
-                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 50.0, 4.0, 2,
+                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 48.0, 52.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
-                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 60.0, 4.0, 2,
+                        DataFilter.perform_bandstop(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 58.0, 62.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
-                        DataFilter.perform_bandpass(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 24.0, 47.0, 2,
+                        DataFilter.perform_bandpass(tmpArray[DataActivity.channels[i]], DataActivity.samplingRate, 2.0, 47.0, 2,
                                 FilterTypes.BUTTERWORTH.get_code (), 0.0);
                     }
                     // downsampling
