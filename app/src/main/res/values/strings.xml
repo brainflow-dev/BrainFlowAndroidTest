@@ -18,6 +18,15 @@
     <string name="ip_address_summary">Optional: can be discovered automatically</string>
     <string name="ip_port_key">ip_port_key</string>
     <string name="ip_port_summary">Required for WIFI Shield</string>
+    <string name="serial_number_title">Serial Number</string>
+    <string name="serial_number_key">serial_number_key</string>
+    <string name="serial_number_summary">Optional: exact BLE device name, for example MuseS-XXXX</string>
+    <string name="mac_address_title">MAC Address</string>
+    <string name="mac_address_key">mac_address_key</string>
+    <string name="mac_address_summary">Optional: exact BLE address</string>
+    <string name="timeout_title">Discovery Timeout</string>
+    <string name="timeout_key">timeout_key</string>
+    <string name="timeout_summary">Seconds; Muse boards default to 20 when empty</string>
 
     <!-- Settings Activity Title -->
     <string name="title_activity_settings">Settings</string>
@@ -31,7 +40,7 @@
     <string name="submit_summary">Configure parameters above and submit settings to start</string>
     <string name="submit_key">submit_key</string>
     <string name="title_activity_data">DataActivity</string>
-    
+
     <string name="title_dataplot">Data</string>
     <string name="title_psdplot">PSD</string>
     <string name="title_bandpowerplot">BandPower</string>

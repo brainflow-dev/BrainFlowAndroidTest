@@ -12,6 +12,9 @@ Currently it supports:
 * OpenBCI Ganglion + WIFI Shield
 * OpenBCI Cyton + WIFI Shield
 * OpenBCI Cyton Daisy + WIFI Shield
+* Muse 2
+* Muse S
+* Muse Athena
 
 BrainFlow may work on Android for other devices as well without any changes, but so far on Android we tested only devices above.
 
@@ -19,5 +22,5 @@ BrainFlow may work on Android for other devices as well without any changes, but
 
 It's hard to configure Android Emulator to work with real boards, so in Android Emulator we recommend to use Synthetic Board and test real boards directly on real Android Device
 
-## License: 
+## License:
 MIT

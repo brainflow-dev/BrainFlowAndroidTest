@@ -66,6 +66,10 @@ public class BandPowerPlotFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
+        if (!DataActivity.isSessionReady || DataActivity.boardShim == null || DataActivity.channels == null || DataActivity.channels.length == 0 || DataActivity.samplingRate <= 0) {
+            return;
+        }
+
         worker = new Runnable() {
             @Override
             public void run() {
@@ -90,8 +94,12 @@ public class BandPowerPlotFragment extends Fragment {
 
     @Override
     public void onPause() {
-        handler.removeCallbacks(worker);
-        graph.removeAllSeries();
+        if (worker != null) {
+            handler.removeCallbacks(worker);
+        }
+        if (graph != null) {
+            graph.removeAllSeries();
+        }
         super.onPause();
     }
 }

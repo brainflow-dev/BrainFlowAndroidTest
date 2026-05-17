@@ -5,6 +5,9 @@
         <item>Ganglion WIFI</item>
         <item>Cyton WIFI</item>
         <item>Cyton Daisy WIFI</item>
+        <item>Muse 2</item>
+        <item>Muse S</item>
+        <item>Muse Athena</item>
     </string-array>
 
     <string-array name="board_id_values">
@@ -12,6 +15,9 @@
         <item>4</item>
         <item>5</item>
         <item>6</item>
+        <item>38</item>
+        <item>39</item>
+        <item>67</item>
     </string-array>
 
     <!-- Data Type Preference -->

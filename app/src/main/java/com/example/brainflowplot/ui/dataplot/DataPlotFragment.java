@@ -18,12 +18,12 @@ import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
 import brainflow.AggOperations;
-import brainflow.BrainFlowError;
 import brainflow.DataFilter;
 import brainflow.FilterTypes;
 
 public class DataPlotFragment extends Fragment {
 
+    private static final String TAG = "BrainFlowLog";
     private int windowSize = 8;
     private int timeSleep = 50; // 20fps
     private GraphView graph = null;
@@ -32,6 +32,8 @@ public class DataPlotFragment extends Fragment {
     private final Handler handler = new Handler();
     private static int downnsamplingOrder = 1;
     private static final int maxValue = 1000;
+    private int emptyDataLogCounter = 0;
+    private boolean firstSamplesLogged = false;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -51,7 +53,17 @@ public class DataPlotFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
+        if (!DataActivity.isSessionReady || DataActivity.boardShim == null || DataActivity.channels == null || DataActivity.channels.length == 0 || DataActivity.samplingRate <= 0) {
+            Log.i(TAG, "TimeSeries plot is waiting for session: isSessionReady="
+                    + DataActivity.isSessionReady
+                    + ", boardShimSet=" + (DataActivity.boardShim != null)
+                    + ", channelCount=" + (DataActivity.channels == null ? 0 : DataActivity.channels.length)
+                    + ", samplingRate=" + DataActivity.samplingRate);
+            return;
+        }
+
         // don't plot too many datapoints
+        downnsamplingOrder = 1;
         int desiredSamplingRate = 500;
         if (DataActivity.samplingRate > desiredSamplingRate) {
             downnsamplingOrder = DataActivity.samplingRate / desiredSamplingRate;
@@ -67,15 +79,34 @@ public class DataPlotFragment extends Fragment {
             series[i].setColor(DataActivity.colors[i % DataActivity.colors.length]);
             graph.addSeries(series[i]);
         }
+        Log.i(TAG, "TimeSeries plot started: samplingRate=" + DataActivity.samplingRate
+                + ", channelCount=" + DataActivity.channels.length
+                + ", downsamplingOrder=" + downnsamplingOrder);
 
         worker = new Runnable() {
             @Override
             public void run() {
                 try {
-                    double[][] tempArray = DataActivity.boardShim.get_current_board_data(DataActivity.samplingRate * windowSize);
+                    int samplesToRequest = DataActivity.samplingRate * windowSize;
+                    double[][] tempArray = DataActivity.boardShim.get_current_board_data(samplesToRequest);
+                    int availableSamples = tempArray.length == 0 ? 0 : tempArray[0].length;
+                    if (availableSamples == 0) {
+                        emptyDataLogCounter++;
+                        if (emptyDataLogCounter == 1 || emptyDataLogCounter % 40 == 0) {
+                            Log.i(TAG, "TimeSeries plot has no samples yet; stream is running but buffer is empty");
+                        }
+                    } else if (!firstSamplesLogged) {
+                        firstSamplesLogged = true;
+                        Log.i(TAG, "TimeSeries plot received samples: rows="
+                                + tempArray.length + ", samples=" + availableSamples);
+                    }
                     double[][] tmpArray = new double[tempArray.length][DataActivity.samplingRate * windowSize];
                     double[][] dataArray = null;
                     // prepend with zeroes if less datapoints
+                    if (tempArray.length == 0) {
+                        handler.postDelayed(this, timeSleep);
+                        return;
+                    }
                     if (tempArray[0].length != DataActivity.samplingRate * windowSize) {
                         for (int i = 0; i < tempArray.length; i++) {
                             for (int j = 0; j < DataActivity.samplingRate * windowSize - tempArray[i].length; j++) {
@@ -130,8 +161,8 @@ public class DataPlotFragment extends Fragment {
                         }
                         series[i].resetData(values);
                     }
-                } catch (BrainFlowError e) {
-                    Log.e(getString(R.string.log_tag), Log.getStackTraceString(e));
+                } catch (Exception e) {
+                    Log.e(TAG, Log.getStackTraceString(e));
                 }
 
                 handler.postDelayed(this, timeSleep);
@@ -142,8 +173,12 @@ public class DataPlotFragment extends Fragment {
 
     @Override
     public void onPause() {
-        handler.removeCallbacks(worker);
-        graph.removeAllSeries();
+        if (worker != null) {
+            handler.removeCallbacks(worker);
+        }
+        if (graph != null) {
+            graph.removeAllSeries();
+        }
         super.onPause();
     }
 }

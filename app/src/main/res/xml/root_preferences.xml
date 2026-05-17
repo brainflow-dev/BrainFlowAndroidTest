@@ -9,18 +9,36 @@
             app:key="@string/board_id_key"
             app:title="@string/board_id_title"
             app:useSimpleSummaryProvider="true"
-            app:defaultValue="-1"/>
+            app:defaultValue="-1" />
 
         <EditTextPreference
             app:key="@string/ip_address_key"
             app:summary="@string/ip_address_summary"
             app:title="@string/ip_address_title"
-            app:useSimpleSummaryProvider="false"/>
+            app:useSimpleSummaryProvider="false" />
 
         <EditTextPreference
             app:key="@string/ip_port_key"
             app:summary="@string/ip_port_summary"
             app:title="@string/ip_port_title"
+            app:useSimpleSummaryProvider="false" />
+
+        <EditTextPreference
+            app:key="@string/serial_number_key"
+            app:summary="@string/serial_number_summary"
+            app:title="@string/serial_number_title"
+            app:useSimpleSummaryProvider="false" />
+
+        <EditTextPreference
+            app:key="@string/mac_address_key"
+            app:summary="@string/mac_address_summary"
+            app:title="@string/mac_address_title"
+            app:useSimpleSummaryProvider="false" />
+
+        <EditTextPreference
+            app:key="@string/timeout_key"
+            app:summary="@string/timeout_summary"
+            app:title="@string/timeout_title"
             app:useSimpleSummaryProvider="false" />
 
     </PreferenceCategory>
