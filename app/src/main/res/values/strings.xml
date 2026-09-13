@@ -1,5 +1,39 @@
 <resources>
-    <string name="app_name">BrainFlowPlot</string>
+    <string name="app_name">BrainFlow Muse BLE Test</string>
+
+    <string name="muse_ble_title">BrainFlow Muse BLE Test</string>
+    <string name="muse_ble_intro">Power on one Muse, select its model, and connect. The proof is complete only when BrainFlow receives EEG samples. After sixteen seconds, the app adds edge-safe brainwave powerbands and a smoothed relaxation score. The optional device name must exactly match the BLE name, such as MuseS-XXXX.</string>
+    <string name="board_label">Muse model</string>
+    <string name="device_name_label">Exact BLE device name (optional)</string>
+    <string name="timeout_label">Discovery timeout in seconds (5&#8211;120)</string>
+    <string name="connect_button">Connect &amp; stream</string>
+    <string name="disconnect_button">Disconnect</string>
+    <string name="status_idle">Ready. Power on a Muse and tap Connect &amp; stream.</string>
+    <string name="status_connecting">BrainFlow is scanning for and connecting to the Muse over BLE&#8230;</string>
+    <string name="status_waiting_for_data">Connected and streaming. Waiting for the first EEG packet&#8230;</string>
+    <string name="status_verified">VERIFIED: live Muse EEG samples received over BLE through BrainFlow.</string>
+    <string name="status_connected_no_data">Connected, but no EEG packets arrived in 10 seconds. Check headset power and retry.</string>
+    <string name="status_disconnecting">Stopping stream and releasing the BrainFlow session&#8230;</string>
+    <string name="brain_activity_title">Live brain activity</string>
+    <string name="brain_activity_subtitle">Ten-second rolling analysis, refreshed once per second with a three-second right-context delay. Keep still and wear the sensors firmly for more meaningful feedback.</string>
+    <string name="relaxation_title">Relaxation score</string>
+    <string name="relaxation_waiting">Waiting for EEG&#8230;</string>
+    <string name="relaxation_collecting">Collecting clean analysis context: %1$.1f / %2$d s (%3$d s analysis + %4$d s per edge)</string>
+    <string name="relaxation_score_value">%1$d%% relaxed</string>
+    <string name="relaxation_model_detail">BrainFlow RESTFULNESS &#8226; DEFAULT_CLASSIFIER &#8226; native default moving average (five predictions) &#8226; edge-safe ten-second band powers. Experimental feedback; not a clinical measurement or the proprietary Muse Calm score.</string>
+    <string name="relaxation_classifier_unavailable">Relaxation classifier unavailable: %1$s</string>
+    <string name="band_analysis_unavailable">Band-power analysis unavailable: %1$s</string>
+    <string name="band_power_title">Brainwave Powerbands</string>
+    <string name="band_power_subtitle">Delta 2&#8211;4 Hz, theta 4&#8211;8 Hz, alpha 8&#8211;13 Hz, beta 13&#8211;30 Hz, and gamma 30&#8211;45 Hz. Zero-phase filters use sixteen seconds of real data; both three-second edge guards are discarded before the central ten-second PSD.</string>
+    <string name="band_plot_waiting">Collecting sixteen seconds of EEG for edge-safe powerbands&#8230;</string>
+    <string name="band_plot_now">now</string>
+    <string name="band_plot_accessibility">Brainwave powerbands. Delta %1$.1f dB, theta %2$.1f dB, alpha %3$.1f dB, beta %4$.1f dB, gamma %5$.1f dB.</string>
+    <string name="evidence_title">Verification evidence</string>
+    <string name="evidence_empty">No stream evidence yet.</string>
+    <string name="evidence_connecting">Model: %1$s\nBoard ID: %2$d\nPreset: %3$s\nDevice: %4$s\nTimeout: %5$d s\n\nResult: prepare_session() in progress</string>
+    <string name="evidence_waiting">Model: %1$s\nBoard ID: %2$d\nPreset: %3$s\nDevice: %4$s\nSampling rate: %5$d Hz\nEEG rows: %6$s\n\nResult: start_stream() succeeded; waiting for data</string>
+    <string name="evidence_verified">Model: %1$s\nBoard ID: %2$d\nPreset: %3$s\nSampling rate: %4$d Hz\nEEG rows: %5$s\nTotal sample count: %6$d\nLatest batch count: %7$d\nStream duration: %8$d s\nLatest BrainFlow timestamp: %9$s\nLatest EEG values (uV): %10$s</string>
+    <string name="log_title">Event log</string>
 
     <string name="log_tag">BrainFlowLog</string>
 
