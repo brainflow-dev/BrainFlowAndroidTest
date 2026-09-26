@@ -5,12 +5,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -35,18 +35,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import brainflow.BoardIds;
 import brainflow.BoardShim;
-import brainflow.BrainFlowClassifiers;
 import brainflow.BrainFlowInputParams;
-import brainflow.BrainFlowMetrics;
-import brainflow.BrainFlowModelParams;
-import brainflow.MLModel;
+import brainflow.BrainFlowPresets;
 
 /**
  * Minimal foreground-only smoke test for Muse BLE support in the BrainFlow Android AAR.
  *
  * A successful proof requires prepare_session(), start_stream(), and at least one EEG packet.
- * All BrainFlow native calls are serialized on one worker so board and classifier lifecycle
- * operations cannot overlap polling, analysis, or disconnect.
+ * All BrainFlow native calls are serialized on one worker so board lifecycle, preset polling,
+ * analysis, and disconnect operations cannot overlap.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -57,8 +54,6 @@ public class MainActivity extends AppCompatActivity {
     private static final long NO_DATA_WARNING_MS = 10000L;
     private static final int ANALYSIS_WINDOW_SECONDS = 10;
     private static final int FILTER_GUARD_SECONDS = 3;
-    private static final String CLASSIFIER_MOVING_AVERAGE_PARAMS =
-            "{\"moving_average\":true}";
     private static final long ANALYSIS_INTERVAL_MS = 1000L;
     private static final int STATUS_NEUTRAL_BACKGROUND = 0xFFE8EAF6;
     private static final int STATUS_NEUTRAL_TEXT = 0xFF212121;
@@ -81,10 +76,11 @@ public class MainActivity extends AppCompatActivity {
     private Button disconnectButton;
     private ProgressBar progressBar;
     private TextView statusText;
-    private TextView relaxationScoreText;
-    private TextView relaxationModelText;
-    private ProgressBar relaxationScoreProgress;
+    private TextView accelerometerValuesText;
+    private TextView accelerometerMagnitudeText;
+    private TextView accelerometerMetaText;
     private BandPowerPlotView bandPowerPlot;
+    private TextView bandPowerStatusText;
     private TextView evidenceText;
     private TextView logText;
 
@@ -95,11 +91,19 @@ public class MainActivity extends AppCompatActivity {
     private int activeSamplingRate;
     private int[] activeEegChannels = new int[0];
     private int activeTimestampChannel = -1;
+    private int activeAccelSamplingRate;
+    private int[] activeAccelChannels = new int[0];
+    private int activeAccelTimestampChannel = -1;
     private long streamStartedAtMs;
     private long totalSamples;
-    private long lastUiUpdateMs;
+    private long totalAccelSamples;
+    private long lastEegUiUpdateMs;
+    private long lastAccelUiUpdateMs;
     private boolean firstPacketSeen;
+    private boolean firstAccelPacketSeen;
     private boolean noDataWarningShown;
+    private boolean noAccelDataWarningShown;
+    private AccelerometerSample latestAccelerometerSample;
     private RollingBoardBuffer analysisBuffer;
     private int analysisWindowSamples;
     private int analysisGuardSamples;
@@ -107,7 +111,6 @@ public class MainActivity extends AppCompatActivity {
     private long lastAnalysisAtMs;
     private boolean bandAnalysisEnabled;
     private boolean firstAnalysisSeen;
-    private MLModel relaxationModel;
     private volatile ScheduledFuture<?> pollingTask;
 
     private volatile boolean destroyed;
@@ -118,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
+        applySystemBarInsets(findViewById(R.id.root_scroll));
 
         boardSpinner = findViewById(R.id.board_spinner);
         deviceNameInput = findViewById(R.id.device_name_input);
@@ -126,10 +130,11 @@ public class MainActivity extends AppCompatActivity {
         disconnectButton = findViewById(R.id.disconnect_button);
         progressBar = findViewById(R.id.connection_progress);
         statusText = findViewById(R.id.status_text);
-        relaxationScoreText = findViewById(R.id.relaxation_score_text);
-        relaxationModelText = findViewById(R.id.relaxation_model_text);
-        relaxationScoreProgress = findViewById(R.id.relaxation_score_progress);
+        accelerometerValuesText = findViewById(R.id.accelerometer_values_text);
+        accelerometerMagnitudeText = findViewById(R.id.accelerometer_magnitude_text);
+        accelerometerMetaText = findViewById(R.id.accelerometer_meta_text);
         bandPowerPlot = findViewById(R.id.band_power_plot);
+        bandPowerStatusText = findViewById(R.id.band_power_status_text);
         evidenceText = findViewById(R.id.evidence_text);
         logText = findViewById(R.id.log_text);
 
@@ -143,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         timeoutInput.setText(String.valueOf(DEFAULT_TIMEOUT_SECONDS));
         connectButton.setOnClickListener(view -> connectFromUi());
         disconnectButton.setOnClickListener(view -> disconnectFromUi());
-        resetAnalysisUi();
+        resetLiveDataUi();
 
         try {
             BoardShim.enable_dev_board_logger();
@@ -151,6 +156,23 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception error) {
             showIdleError("BrainFlow AAR failed to initialize: " + readableMessage(error));
         }
+    }
+
+    private static void applySystemBarInsets(View root) {
+        int initialLeft = root.getPaddingLeft();
+        int initialTop = root.getPaddingTop();
+        int initialRight = root.getPaddingRight();
+        int initialBottom = root.getPaddingBottom();
+        root.setOnApplyWindowInsetsListener((view, windowInsets) -> {
+            android.graphics.Insets bars = windowInsets.getInsets(
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+            view.setPadding(
+                    initialLeft + bars.left,
+                    initialTop + bars.top,
+                    initialRight + bars.right,
+                    initialBottom + bars.bottom);
+            return windowInsets;
+        });
     }
 
     private void connectFromUi() {
@@ -227,6 +249,16 @@ public class MainActivity extends AppCompatActivity {
             int samplingRate = BoardShim.get_sampling_rate(profile.boardId);
             int[] eegChannels = BoardShim.get_eeg_channels(profile.boardId);
             int timestampChannel = BoardShim.get_timestamp_channel(profile.boardId);
+            int accelSamplingRate = BoardShim.get_sampling_rate(
+                    profile.boardId, BrainFlowPresets.AUXILIARY_PRESET);
+            int[] accelChannels = BoardShim.get_accel_channels(
+                    profile.boardId, BrainFlowPresets.AUXILIARY_PRESET);
+            int accelTimestampChannel = BoardShim.get_timestamp_channel(
+                    profile.boardId, BrainFlowPresets.AUXILIARY_PRESET);
+            if (accelChannels.length < 3) {
+                throw new IllegalStateException(
+                        "Muse auxiliary preset exposes fewer than three accelerometer axes");
+            }
 
             boardShim = candidate;
             streamStarted = true;
@@ -234,11 +266,19 @@ public class MainActivity extends AppCompatActivity {
             activeSamplingRate = samplingRate;
             activeEegChannels = eegChannels;
             activeTimestampChannel = timestampChannel;
+            activeAccelSamplingRate = accelSamplingRate;
+            activeAccelChannels = accelChannels;
+            activeAccelTimestampChannel = accelTimestampChannel;
             streamStartedAtMs = System.currentTimeMillis();
             totalSamples = 0;
-            lastUiUpdateMs = 0;
+            totalAccelSamples = 0;
+            lastEegUiUpdateMs = 0;
+            lastAccelUiUpdateMs = 0;
             firstPacketSeen = false;
+            firstAccelPacketSeen = false;
             noDataWarningShown = false;
+            noAccelDataWarningShown = false;
+            latestAccelerometerSample = null;
             analysisBuffer = null;
             analysisWindowSamples = samplingRate * ANALYSIS_WINDOW_SECONDS;
             analysisGuardSamples = samplingRate * FILTER_GUARD_SECONDS;
@@ -251,13 +291,19 @@ public class MainActivity extends AppCompatActivity {
             candidate = null; // Ownership moved to boardShim.
             candidateStreamStarted = false;
 
-            prepareRelaxationModelOnWorker();
-
             if (disconnectRequested.get()) {
                 throw new CancellationException("Connection cancelled.");
             }
 
-            postUi(() -> showStreamingUi(profile, deviceName, samplingRate, eegChannels));
+            postLog("Muse accelerometer available from AUXILIARY_PRESET at "
+                    + accelSamplingRate + " Hz on rows " + Arrays.toString(accelChannels) + ".");
+            postUi(() -> showStreamingUi(
+                    profile,
+                    deviceName,
+                    samplingRate,
+                    eegChannels,
+                    accelSamplingRate,
+                    accelChannels));
             pollingTask = brainFlowExecutor.scheduleWithFixedDelay(
                     this::pollDataOnWorker,
                     POLL_INTERVAL_MS,
@@ -285,16 +331,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
         try {
-            double[][] data = activeBoard.get_board_data();
-            int batchSamples = sampleCount(data);
+            double[][] eegData = activeBoard.get_board_data();
+            double[][] accelData =
+                    activeBoard.get_board_data(BrainFlowPresets.AUXILIARY_PRESET);
             long now = System.currentTimeMillis();
+            int eegBatchSamples = sampleCount(eegData);
+            int accelBatchSamples = sampleCount(accelData);
 
-            if (batchSamples > 0) {
-                totalSamples += batchSamples;
+            if (accelBatchSamples > 0) {
+                processAccelerometerDataOnWorker(accelData, accelBatchSamples, now);
+            } else if (!firstAccelPacketSeen
+                    && !noAccelDataWarningShown
+                    && now - streamStartedAtMs >= NO_DATA_WARNING_MS) {
+                noAccelDataWarningShown = true;
+                postLog("No accelerometer packets arrived during the first 10 seconds.");
+                postUi(() -> accelerometerMetaText.setText(
+                        R.string.accelerometer_no_data));
+            }
+
+            if (eegBatchSamples > 0) {
+                totalSamples += eegBatchSamples;
                 if (analysisBuffer == null) {
-                    analysisBuffer = new RollingBoardBuffer(data.length, analysisBufferSamples);
+                    analysisBuffer =
+                            new RollingBoardBuffer(eegData.length, analysisBufferSamples);
                 }
-                analysisBuffer.append(data);
+                analysisBuffer.append(eegData);
                 int analysisSamples = analysisBuffer.size();
                 if (!firstPacketSeen) {
                     firstPacketSeen = true;
@@ -308,33 +369,42 @@ public class MainActivity extends AppCompatActivity {
                     analyzeEegOnWorker();
                 }
 
-                if (now - lastUiUpdateMs >= 500L) {
-                    lastUiUpdateMs = now;
-                    String latestValues = formatLatestEegValues(data, batchSamples - 1);
-                    String latestTimestamp = formatLatestTimestamp(data, batchSamples - 1);
+                if (now - lastEegUiUpdateMs >= 500L) {
+                    lastEegUiUpdateMs = now;
+                    String latestValues =
+                            formatLatestEegValues(eegData, eegBatchSamples - 1);
+                    String latestTimestamp =
+                            formatLatestTimestamp(eegData, eegBatchSamples - 1);
                     long elapsedMs = now - streamStartedAtMs;
                     long observedSamples = totalSamples;
-                    boolean classifierReady = relaxationModel != null;
+                    long observedAccelSamples = totalAccelSamples;
+                    AccelerometerSample accelSample = latestAccelerometerSample;
                     postUi(() -> {
                         showVerifiedData(
-                                batchSamples,
+                                eegBatchSamples,
                                 observedSamples,
                                 elapsedMs,
                                 latestTimestamp,
-                                latestValues);
-                        if (classifierReady && analysisSamples < analysisBufferSamples) {
-                            showAnalysisWarmup(
+                                latestValues,
+                                observedAccelSamples,
+                                accelSample);
+                        if (analysisSamples < analysisBufferSamples) {
+                            showBandPowerWarmup(
                                     analysisSamples,
                                     analysisBufferSamples,
                                     activeSamplingRate);
                         }
                     });
                 }
-            } else if (!noDataWarningShown && now - streamStartedAtMs >= NO_DATA_WARNING_MS) {
+            } else if (!firstPacketSeen
+                    && !noDataWarningShown
+                    && now - streamStartedAtMs >= NO_DATA_WARNING_MS) {
                 noDataWarningShown = true;
                 postLog("No EEG packets arrived during the first 10 seconds.");
                 postUi(() -> setStatus(
-                        R.string.status_connected_no_data,
+                        firstAccelPacketSeen
+                                ? R.string.status_connected_accel_only
+                                : R.string.status_connected_no_data,
                         STATUS_WARNING_BACKGROUND,
                         STATUS_WARNING_TEXT));
             }
@@ -347,22 +417,28 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void prepareRelaxationModelOnWorker() {
-        releaseRelaxationModel();
-        try {
-            BrainFlowModelParams modelParams = new BrainFlowModelParams(
-                    BrainFlowMetrics.RESTFULNESS,
-                    BrainFlowClassifiers.DEFAULT_CLASSIFIER);
-            modelParams.set_other_info(CLASSIFIER_MOVING_AVERAGE_PARAMS);
-            MLModel model = new MLModel(modelParams);
-            model.prepare();
-            relaxationModel = model;
-            postLog("BrainFlow RESTFULNESS / DEFAULT_CLASSIFIER prepared with BrainFlow 5.23's "
-                    + "native default moving average (five predictions).");
-        } catch (Exception error) {
-            String message = readableMessage(error);
-            postLog("Relaxation classifier unavailable: " + message);
-            postUi(() -> showRelaxationUnavailable(message));
+    private void processAccelerometerDataOnWorker(
+            double[][] data, int batchSamples, long now) {
+        AccelerometerSample sample = AccelerometerSample.latest(
+                data, activeAccelChannels, activeAccelTimestampChannel);
+        latestAccelerometerSample = sample;
+        totalAccelSamples += batchSamples;
+
+        if (!firstAccelPacketSeen) {
+            firstAccelPacketSeen = true;
+            postLog("First Muse accelerometer packet received from AUXILIARY_PRESET.");
+            if (noDataWarningShown && !firstPacketSeen) {
+                postUi(() -> setStatus(
+                        R.string.status_connected_accel_only,
+                        STATUS_WARNING_BACKGROUND,
+                        STATUS_WARNING_TEXT));
+            }
+        }
+
+        if (now - lastAccelUiUpdateMs >= 250L) {
+            lastAccelUiUpdateMs = now;
+            long observedSamples = totalAccelSamples;
+            postUi(() -> showAccelerometerData(sample, observedSamples));
         }
     }
 
@@ -397,41 +473,13 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        Double relaxationScore = null;
-        MLModel model = relaxationModel;
-        if (model != null) {
-            try {
-                double[] prediction = model.predict(averageBandPowers);
-                if (prediction == null
-                        || prediction.length == 0
-                        || !Double.isFinite(prediction[0])) {
-                    throw new IllegalStateException("BrainFlow returned an invalid prediction");
-                }
-                relaxationScore = Math.max(0.0, Math.min(1.0, prediction[0]));
-            } catch (Exception error) {
-                String message = readableMessage(error);
-                postLog("Relaxation prediction disabled: " + message);
-                releaseRelaxationModel();
-                postUi(() -> showRelaxationUnavailable(message));
-            }
-        }
-
         if (!firstAnalysisSeen) {
             firstAnalysisSeen = true;
-            if (relaxationScore == null) {
-                postLog("First edge-safe ten-second BrainFlow band-power window analyzed after "
-                        + "discarding three-second filter guards on both ends.");
-            } else {
-                postLog(String.format(
-                        Locale.US,
-                        "First edge-safe band-power window analyzed; native moving-average "
-                                + "relaxation score %.1f%%.",
-                        relaxationScore * 100.0));
-            }
+            postLog("First edge-safe ten-second BrainFlow band-power window analyzed after "
+                    + "discarding three-second filter guards on both ends.");
         }
 
-        Double displayedScore = relaxationScore;
-        postUi(() -> showAnalysisResult(averageBandPowers, displayedScore));
+        postUi(() -> showAnalysisResult(averageBandPowers));
     }
 
     private void disconnectFromUi() {
@@ -457,13 +505,19 @@ public class MainActivity extends AppCompatActivity {
         cancelPolling();
         BoardShim activeBoard = boardShim;
         boolean activeStreamStarted = streamStarted;
-        releaseRelaxationModel();
         boardShim = null;
         streamStarted = false;
         activeProfile = null;
         activeSamplingRate = 0;
         activeEegChannels = new int[0];
         activeTimestampChannel = -1;
+        activeAccelSamplingRate = 0;
+        activeAccelChannels = new int[0];
+        activeAccelTimestampChannel = -1;
+        totalAccelSamples = 0;
+        firstAccelPacketSeen = false;
+        noAccelDataWarningShown = false;
+        latestAccelerometerSample = null;
         analysisBuffer = null;
         analysisWindowSamples = 0;
         analysisGuardSamples = 0;
@@ -481,20 +535,6 @@ public class MainActivity extends AppCompatActivity {
             // Ownership has already moved to boardShim. This also cancels a polling task that may
             // have been created after the UI requested a disconnect.
             cleanupActiveBoard();
-        }
-    }
-
-    private void releaseRelaxationModel() {
-        MLModel model = relaxationModel;
-        relaxationModel = null;
-        if (model == null) {
-            return;
-        }
-        try {
-            model.release();
-            postLog("BrainFlow relaxation classifier released.");
-        } catch (Exception error) {
-            postLog("MLModel.release() warning: " + readableMessage(error));
         }
     }
 
@@ -546,8 +586,22 @@ public class MainActivity extends AppCompatActivity {
         return String.format(Locale.US, "%.3f", data[activeTimestampChannel][column]);
     }
 
+    private String formatAccelerometerForEvidence(AccelerometerSample sample) {
+        if (sample == null) {
+            return "waiting for AUXILIARY_PRESET packets";
+        }
+        return String.format(
+                Locale.US,
+                "X=%.4f  Y=%.4f  Z=%.4f  |a|=%.4f  timestamp=%.3f",
+                sample.xG,
+                sample.yG,
+                sample.zG,
+                sample.magnitudeG(),
+                sample.timestamp);
+    }
+
     private void setConnectingUi(DeviceProfile profile, String deviceName, int timeoutSeconds) {
-        resetAnalysisUi();
+        resetLiveDataUi();
         boardSpinner.setEnabled(false);
         deviceNameInput.setEnabled(false);
         timeoutInput.setEnabled(false);
@@ -569,7 +623,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showStreamingUi(
-            DeviceProfile profile, String deviceName, int samplingRate, int[] eegChannels) {
+            DeviceProfile profile,
+            String deviceName,
+            int samplingRate,
+            int[] eegChannels,
+            int accelSamplingRate,
+            int[] accelChannels) {
         if (disconnectRequested.get()) {
             return;
         }
@@ -585,7 +644,9 @@ public class MainActivity extends AppCompatActivity {
                 profile.preset,
                 TextUtils.isEmpty(deviceName) ? "automatically discovered" : deviceName,
                 samplingRate,
-                Arrays.toString(eegChannels)));
+                Arrays.toString(eegChannels),
+                accelSamplingRate,
+                Arrays.toString(accelChannels)));
     }
 
     private void showVerifiedData(
@@ -593,7 +654,9 @@ public class MainActivity extends AppCompatActivity {
             long observedSamples,
             long elapsedMs,
             String timestamp,
-            String eegValues) {
+            String eegValues,
+            long observedAccelSamples,
+            AccelerometerSample accelSample) {
         if (disconnectRequested.get()) {
             return;
         }
@@ -614,78 +677,70 @@ public class MainActivity extends AppCompatActivity {
                 batchSamples,
                 elapsedSeconds,
                 timestamp,
-                eegValues));
+                eegValues,
+                activeAccelSamplingRate,
+                Arrays.toString(activeAccelChannels),
+                observedAccelSamples,
+                formatAccelerometerForEvidence(accelSample)));
     }
 
-    private void resetAnalysisUi() {
+    private void resetLiveDataUi() {
         bandPowerPlot.reset();
-        relaxationScoreText.setText(R.string.relaxation_waiting);
-        relaxationScoreText.setTextColor(STATUS_SUCCESS_TEXT);
-        relaxationScoreProgress.setProgress(0);
-        relaxationScoreProgress.setProgressTintList(
-                ColorStateList.valueOf(STATUS_SUCCESS_TEXT));
-        relaxationModelText.setText(R.string.relaxation_model_detail);
+        accelerometerValuesText.setText(R.string.accelerometer_waiting);
+        accelerometerMagnitudeText.setText(R.string.accelerometer_magnitude_waiting);
+        accelerometerMetaText.setText(R.string.accelerometer_detail);
+        bandPowerStatusText.setText(R.string.band_plot_waiting);
+        bandPowerStatusText.setTextColor(STATUS_NEUTRAL_TEXT);
     }
 
-    private void showAnalysisWarmup(int samples, int requiredSamples, int samplingRate) {
+    private void showAccelerometerData(AccelerometerSample sample, long observedSamples) {
+        if (disconnectRequested.get()) {
+            return;
+        }
+        accelerometerValuesText.setText(getString(
+                R.string.accelerometer_values,
+                sample.xG,
+                sample.yG,
+                sample.zG));
+        accelerometerMagnitudeText.setText(getString(
+                R.string.accelerometer_magnitude,
+                sample.magnitudeG()));
+        accelerometerMetaText.setText(getString(
+                R.string.accelerometer_stream_detail,
+                activeAccelSamplingRate,
+                Arrays.toString(activeAccelChannels),
+                observedSamples,
+                sample.timestamp));
+    }
+
+    private void showBandPowerWarmup(int samples, int requiredSamples, int samplingRate) {
         if (disconnectRequested.get() || samplingRate <= 0 || requiredSamples <= 0) {
             return;
         }
         double seconds = samples / (double) samplingRate;
         int requiredSeconds = (int) Math.ceil(requiredSamples / (double) samplingRate);
-        int progress = Math.min(100, (int) Math.round(samples * 100.0 / requiredSamples));
-        relaxationScoreText.setText(getString(
-                R.string.relaxation_collecting,
+        bandPowerStatusText.setText(getString(
+                R.string.band_power_collecting,
                 seconds,
                 requiredSeconds,
                 ANALYSIS_WINDOW_SECONDS,
                 FILTER_GUARD_SECONDS));
-        relaxationScoreProgress.setProgress(progress);
     }
 
-    private void showAnalysisResult(double[] averageBandPowers, Double relaxationScore) {
+    private void showAnalysisResult(double[] averageBandPowers) {
         if (disconnectRequested.get()) {
             return;
         }
         bandPowerPlot.addBandPowers(averageBandPowers);
-        if (relaxationScore == null) {
-            return;
-        }
-
-        int percent = (int) Math.round(relaxationScore * 100.0);
-        int scoreColor;
-        if (percent >= 67) {
-            scoreColor = STATUS_SUCCESS_TEXT;
-        } else if (percent >= 34) {
-            scoreColor = 0xFFF57F17;
-        } else {
-            scoreColor = 0xFF3949AB;
-        }
-        relaxationScoreText.setText(getString(R.string.relaxation_score_value, percent));
-        relaxationScoreText.setTextColor(scoreColor);
-        relaxationScoreProgress.setProgress(percent);
-        relaxationScoreProgress.setProgressTintList(ColorStateList.valueOf(scoreColor));
-        relaxationModelText.setText(R.string.relaxation_model_detail);
-    }
-
-    private void showRelaxationUnavailable(String message) {
-        if (disconnectRequested.get()) {
-            return;
-        }
-        relaxationScoreText.setText(getString(
-                R.string.relaxation_classifier_unavailable,
-                message));
-        relaxationScoreText.setTextColor(STATUS_ERROR_TEXT);
-        relaxationScoreProgress.setProgress(0);
+        bandPowerStatusText.setText(R.string.band_power_live);
     }
 
     private void showBandAnalysisUnavailable(String message) {
         if (disconnectRequested.get()) {
             return;
         }
-        relaxationScoreText.setText(getString(R.string.band_analysis_unavailable, message));
-        relaxationScoreText.setTextColor(STATUS_ERROR_TEXT);
-        relaxationScoreProgress.setProgress(0);
+        bandPowerStatusText.setText(getString(R.string.band_analysis_unavailable, message));
+        bandPowerStatusText.setTextColor(STATUS_ERROR_TEXT);
     }
 
     private void showDisconnectedUi(String message) {

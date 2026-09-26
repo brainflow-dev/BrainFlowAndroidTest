@@ -1,5 +1,6 @@
 package com.example.brainflowplot;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -10,36 +11,30 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 
-import brainflow.BrainFlowClassifiers;
-import brainflow.BrainFlowMetrics;
-import brainflow.BrainFlowModelParams;
-import brainflow.MLModel;
+import brainflow.BoardIds;
+import brainflow.BoardShim;
+import brainflow.BrainFlowPresets;
 
 @RunWith(AndroidJUnit4.class)
 public class BrainFlowAnalysisInstrumentedTest {
 
     @Test
-    public void nativeClassifierMovingAverageMatchesRawPredictionMean() throws Exception {
-        double[][] featureVectors = {
-                {0.10, 0.15, 0.45, 0.20, 0.10},
-                {0.35, 0.25, 0.10, 0.20, 0.10},
-                {0.05, 0.10, 0.15, 0.30, 0.40},
-                {0.20, 0.40, 0.25, 0.10, 0.05},
-                {0.40, 0.10, 0.20, 0.20, 0.10}
+    public void museProfilesExposeThreeAxisAccelerometerAt52Hz() throws Exception {
+        int[] museBoardIds = {
+                BoardIds.MUSE_2_BOARD.get_code(),
+                BoardIds.MUSE_S_BOARD.get_code(),
+                BoardIds.MUSE_S_ATHENA_BOARD.get_code()
         };
-        int defaultWindow = 5;
 
-        double[] raw = predictSequence(featureVectors, "");
-        double[] smoothed = predictSequence(featureVectors, "{\"moving_average\":true}");
-
-        for (int i = 0; i < smoothed.length; i++) {
-            int first = Math.max(0, i - defaultWindow + 1);
-            double expected = 0.0;
-            for (int j = first; j <= i; j++) {
-                expected += raw[j];
-            }
-            expected /= i - first + 1;
-            assertEquals(expected, smoothed[i], 1.0e-9);
+        for (int boardId : museBoardIds) {
+            assertEquals(
+                    52,
+                    BoardShim.get_sampling_rate(
+                            boardId, BrainFlowPresets.AUXILIARY_PRESET));
+            assertArrayEquals(
+                    new int[] {1, 2, 3},
+                    BoardShim.get_accel_channels(
+                            boardId, BrainFlowPresets.AUXILIARY_PRESET));
         }
     }
 
@@ -111,29 +106,6 @@ public class BrainFlowAnalysisInstrumentedTest {
             sum += power;
         }
         assertEquals(1.0, sum, 1.0e-9);
-    }
-
-    private static double[] predictSequence(double[][] featureVectors, String otherInfo)
-            throws Exception {
-        BrainFlowModelParams params = new BrainFlowModelParams(
-                BrainFlowMetrics.RESTFULNESS,
-                BrainFlowClassifiers.DEFAULT_CLASSIFIER);
-        params.set_other_info(otherInfo);
-        MLModel model = new MLModel(params);
-        boolean prepared = false;
-        try {
-            model.prepare();
-            prepared = true;
-            double[] result = new double[featureVectors.length];
-            for (int i = 0; i < featureVectors.length; i++) {
-                result[i] = model.predict(featureVectors[i])[0];
-            }
-            return result;
-        } finally {
-            if (prepared) {
-                model.release();
-            }
-        }
     }
 
     private static double[] syntheticEeg(int samples, int samplingRate) {

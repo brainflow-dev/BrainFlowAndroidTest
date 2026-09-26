@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.View;
 
 import androidx.annotation.Nullable;
@@ -65,7 +66,10 @@ public final class BandPowerPlotView extends View {
 
     private void initialize() {
         density = getResources().getDisplayMetrics().density;
-        scaledDensity = getResources().getDisplayMetrics().scaledDensity;
+        scaledDensity = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP,
+                1.0f,
+                getResources().getDisplayMetrics());
         setBackgroundColor(0xFF111827);
         setMinimumHeight(Math.round(280.0f * density));
         reset();

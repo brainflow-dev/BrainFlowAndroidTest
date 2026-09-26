@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">BrainFlow Muse BLE Test</string>
+    <string name="app_name">BrainFlow Android Example</string>
 
-    <string name="muse_ble_title">BrainFlow Muse BLE Test</string>
-    <string name="muse_ble_intro">Power on one Muse, select its model, and connect. The proof is complete only when BrainFlow receives EEG samples. After sixteen seconds, the app adds edge-safe brainwave powerbands and a smoothed relaxation score. The optional device name must exactly match the BLE name, such as MuseS-XXXX.</string>
+    <string name="muse_ble_title">BrainFlow Android Example</string>
+    <string name="muse_ble_intro">Power on one Muse, select its model, and connect. The proof is complete only when BrainFlow receives EEG samples. Live X/Y/Z acceleration comes from the Muse IMU, while edge-safe brainwave powerbands appear after sixteen seconds. The optional device name must exactly match the BLE name, such as MuseS-XXXX.</string>
     <string name="board_label">Muse model</string>
     <string name="device_name_label">Exact BLE device name (optional)</string>
     <string name="timeout_label">Discovery timeout in seconds (5&#8211;120)</string>
@@ -10,72 +10,34 @@
     <string name="disconnect_button">Disconnect</string>
     <string name="status_idle">Ready. Power on a Muse and tap Connect &amp; stream.</string>
     <string name="status_connecting">BrainFlow is scanning for and connecting to the Muse over BLE&#8230;</string>
-    <string name="status_waiting_for_data">Connected and streaming. Waiting for the first EEG packet&#8230;</string>
+    <string name="status_waiting_for_data">Connected and streaming. Waiting for the first EEG and accelerometer packets&#8230;</string>
     <string name="status_verified">VERIFIED: live Muse EEG samples received over BLE through BrainFlow.</string>
     <string name="status_connected_no_data">Connected, but no EEG packets arrived in 10 seconds. Check headset power and retry.</string>
+    <string name="status_connected_accel_only">Muse accelerometer data is live, but no EEG packets arrived in 10 seconds. Check sensor contact and the selected Muse model.</string>
     <string name="status_disconnecting">Stopping stream and releasing the BrainFlow session&#8230;</string>
     <string name="brain_activity_title">Live brain activity</string>
-    <string name="brain_activity_subtitle">Ten-second rolling analysis, refreshed once per second with a three-second right-context delay. Keep still and wear the sensors firmly for more meaningful feedback.</string>
-    <string name="relaxation_title">Relaxation score</string>
-    <string name="relaxation_waiting">Waiting for EEG&#8230;</string>
-    <string name="relaxation_collecting">Collecting clean analysis context: %1$.1f / %2$d s (%3$d s analysis + %4$d s per edge)</string>
-    <string name="relaxation_score_value">%1$d%% relaxed</string>
-    <string name="relaxation_model_detail">BrainFlow RESTFULNESS &#8226; DEFAULT_CLASSIFIER &#8226; native default moving average (five predictions) &#8226; edge-safe ten-second band powers. Experimental feedback; not a clinical measurement or the proprietary Muse Calm score.</string>
-    <string name="relaxation_classifier_unavailable">Relaxation classifier unavailable: %1$s</string>
+    <string name="brain_activity_subtitle">Motion updates from BrainFlow&#8217;s 52 Hz auxiliary preset. EEG powerbands use a ten-second rolling analysis with three seconds of real filter context on each edge.</string>
+    <string name="accelerometer_title">Live Muse accelerometer</string>
+    <string name="accelerometer_waiting">X  &#8212; g\nY  &#8212; g\nZ  &#8212; g</string>
+    <string name="accelerometer_values">X  %1$.4f g\nY  %2$.4f g\nZ  %3$.4f g</string>
+    <string name="accelerometer_magnitude_waiting">Magnitude  &#8212; g</string>
+    <string name="accelerometer_magnitude">Magnitude  %1$.4f g</string>
+    <string name="accelerometer_detail">Waiting for AUXILIARY_PRESET motion packets. Muse acceleration is sampled at 52 Hz and reported in g.</string>
+    <string name="accelerometer_stream_detail">AUXILIARY_PRESET &#8226; %1$d Hz &#8226; rows %2$s &#8226; sample count %3$d &#8226; timestamp %4$.3f</string>
+    <string name="accelerometer_no_data">No accelerometer packets arrived in 10 seconds. Verify the Muse model and restart the stream.</string>
     <string name="band_analysis_unavailable">Band-power analysis unavailable: %1$s</string>
     <string name="band_power_title">Brainwave Powerbands</string>
     <string name="band_power_subtitle">Delta 2&#8211;4 Hz, theta 4&#8211;8 Hz, alpha 8&#8211;13 Hz, beta 13&#8211;30 Hz, and gamma 30&#8211;45 Hz. Zero-phase filters use sixteen seconds of real data; both three-second edge guards are discarded before the central ten-second PSD.</string>
     <string name="band_plot_waiting">Collecting sixteen seconds of EEG for edge-safe powerbands&#8230;</string>
+    <string name="band_power_collecting">Collecting clean EEG context: %1$.1f / %2$d s (%3$d s analysis + %4$d s per edge)</string>
+    <string name="band_power_live">Live edge-safe powerbands; refreshed once per second.</string>
     <string name="band_plot_now">now</string>
     <string name="band_plot_accessibility">Brainwave powerbands. Delta %1$.1f dB, theta %2$.1f dB, alpha %3$.1f dB, beta %4$.1f dB, gamma %5$.1f dB.</string>
     <string name="evidence_title">Verification evidence</string>
     <string name="evidence_empty">No stream evidence yet.</string>
     <string name="evidence_connecting">Model: %1$s\nBoard ID: %2$d\nPreset: %3$s\nDevice: %4$s\nTimeout: %5$d s\n\nResult: prepare_session() in progress</string>
-    <string name="evidence_waiting">Model: %1$s\nBoard ID: %2$d\nPreset: %3$s\nDevice: %4$s\nSampling rate: %5$d Hz\nEEG rows: %6$s\n\nResult: start_stream() succeeded; waiting for data</string>
-    <string name="evidence_verified">Model: %1$s\nBoard ID: %2$d\nPreset: %3$s\nSampling rate: %4$d Hz\nEEG rows: %5$s\nTotal sample count: %6$d\nLatest batch count: %7$d\nStream duration: %8$d s\nLatest BrainFlow timestamp: %9$s\nLatest EEG values (uV): %10$s</string>
+    <string name="evidence_waiting">Model: %1$s\nBoard ID: %2$d\nMuse command: %3$s\nDevice: %4$s\nEEG sampling rate: %5$d Hz\nEEG rows: %6$s\nAccelerometer preset: AUXILIARY_PRESET\nAccelerometer sampling rate: %7$d Hz\nAccelerometer rows: %8$s\n\nResult: start_stream() succeeded; waiting for data</string>
+    <string name="evidence_verified">Model: %1$s\nBoard ID: %2$d\nMuse command: %3$s\nEEG sampling rate: %4$d Hz\nEEG rows: %5$s\nEEG sample count: %6$d\nLatest EEG batch: %7$d\nStream duration: %8$d s\nLatest EEG timestamp: %9$s\nLatest EEG values (uV): %10$s\nAccelerometer sampling rate: %11$d Hz\nAccelerometer rows: %12$s\nAccelerometer sample count: %13$d\nLatest acceleration (g): %14$s</string>
     <string name="log_title">Event log</string>
 
-    <string name="log_tag">BrainFlowLog</string>
-
-    <!-- Preference Titles -->
-    <string name="board_selection">Board Selection</string>
-    <string name="app_params">Application Parameters</string>
-    <string name="start_preference">Start</string>
-
-    <!-- Board Selection Preferences -->
-    <string name="board_id_summary">Select Device</string>
-    <string name="board_id_key">board_id</string>
-    <string name="board_id_title">BrainFlow Board</string>
-    <string name="ip_address_title">IP Address</string>
-    <string name="ip_address_key">ip_addr_key</string>
-    <string name="ip_port_title">IP Port</string>
-    <string name="ip_address_summary">Optional: can be discovered automatically</string>
-    <string name="ip_port_key">ip_port_key</string>
-    <string name="ip_port_summary">Required for WIFI Shield</string>
-    <string name="serial_number_title">Serial Number</string>
-    <string name="serial_number_key">serial_number_key</string>
-    <string name="serial_number_summary">Optional: exact BLE device name, for example MuseS-XXXX</string>
-    <string name="mac_address_title">MAC Address</string>
-    <string name="mac_address_key">mac_address_key</string>
-    <string name="mac_address_summary">Optional: exact BLE address</string>
-    <string name="timeout_title">Discovery Timeout</string>
-    <string name="timeout_key">timeout_key</string>
-    <string name="timeout_summary">Seconds; Muse boards default to 20 when empty</string>
-
-    <!-- Settings Activity Title -->
-    <string name="title_activity_settings">Settings</string>
-
-    <!-- App Parameters Preferences -->
-
-    <string name="data_type_title">Signal Type</string>
-    <string name="data_type_key">data_type_key</string>
-
-    <string name="submit_button">SUBMIT</string>
-    <string name="submit_summary">Configure parameters above and submit settings to start</string>
-    <string name="submit_key">submit_key</string>
-    <string name="title_activity_data">DataActivity</string>
-
-    <string name="title_dataplot">Data</string>
-    <string name="title_psdplot">PSD</string>
-    <string name="title_bandpowerplot">BandPower</string>
 </resources>

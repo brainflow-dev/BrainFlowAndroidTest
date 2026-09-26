@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
@@ -141,35 +142,34 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/relaxation_title"
+                android:text="@string/accelerometer_title"
                 android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/relaxation_score_text"
+                android:id="@+id/accelerometer_values_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="@string/relaxation_waiting"
+                android:fontFamily="monospace"
+                android:text="@string/accelerometer_waiting"
                 android:textColor="#1B5E20"
-                android:textSize="26sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
-            <ProgressBar
-                android:id="@+id/relaxation_score_progress"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:indeterminate="false"
-                android:max="100"
-                android:progress="0" />
-
             <TextView
-                android:id="@+id/relaxation_model_text"
+                android:id="@+id/accelerometer_magnitude_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="@string/relaxation_model_detail"
+                android:text="@string/accelerometer_magnitude_waiting"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/accelerometer_meta_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/accelerometer_detail"
                 android:textSize="12sp" />
         </LinearLayout>
 
@@ -186,6 +186,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="@string/band_power_subtitle" />
+
+        <TextView
+            android:id="@+id/band_power_status_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/band_plot_waiting"
+            android:textStyle="italic" />
 
         <com.example.brainflowplot.BandPowerPlotView
             android:id="@+id/band_power_plot"
